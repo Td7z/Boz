@@ -1,38 +1,34 @@
-import socket
-import re
+import twitchio
+import asyncio
+from twitchio.ext import commands
 
-# Defina suas variÃ¡veis
-NOME_DO_BOT = 'hawkinngx'
-TOKEN = 'oauth:rdjdrtbvsumf3127zffe8xniwqcxvc'
-CANAL = 'xxmarciano'
+# Defina suas variáveis
+# Configurações do bot Twitch
+bot_username = 'hawkinngx'
+bot_token = 'oauth:rdjdrtbvsumf3127zffe8xniwqcxvc'
+channel_name = 'xxmarciano'
 
-# Conecte-se ao servidor Twitch
-HOST = 'irc.chat.twitch.tv'
-PORTA = 6667
+# Criar a classe do bot
+class MeuBot(commands.Bot):
 
-sock = socket.socket()
-sock.connect((HOST, PORTA))
-sock.send(f'PASS {TOKEN}\r\n'.encode('utf-8'))
-sock.send(f'NICK {NOME_DO_BOT}\r\n'.encode('utf-8'))
-sock.send(f'JOIN #{CANAL}\r\n'.encode('utf-8'))
+    # Inicializar o bot
+    def __init__(self):
+        super().__init__(
+            token=bot_token,
+            prefix='!',
+            initial_channels=[channel_name]
+        )
 
-# FunÃ§Ã£o para enviar mensagens ao chat
-def enviar_mensagem(mensagem):
-    sock.send(f'PRIVMSG #{CANAL} :{mensagem}\r\n'.encode('utf-8'))
+    # Evento que ocorre quando o bot se conecta ao chat
+    async def event_ready(self):
+        print(f'{self.nick} está online!')
+        await self.get_channel(channel_name).send(f'Olá, eu sou o {self.nick}, o bot do canal!')
 
-# Loop principal para ouvir mensagens do chat
-while True:
-    resposta = sock.recv(2048).decode('utf-8')
+    # Evento que ocorre quando o bot recebe uma mensagem no chat
+    async def event_message(self, message):
+        print(message.content)
+        await self.handle_commands(message)
 
-    # LÃ³gica para identificar mensagens do chat
-    if 'PING' in resposta:
-        sock.send('PONG\r\n'.encode('utf-8'))
-    elif 'PRIVMSG' in resposta:
-        usuario = re.search(r'\w+', resposta).group(0)
-        mensagem = re.search(r'PRIVMSG #\w+ :(.+)', resposta).group(1)
-        
-        print(f'{usuario}: {mensagem}')
-
-        # Adicione sua lÃ³gica para responder a mensagens aqui
-
-# Lembre-se de adicionar lÃ³gica para fechar a conexÃ£o quando necessÃ¡rio
+# Criar e executar o bot
+bot = MeuBot()
+bot.run()
